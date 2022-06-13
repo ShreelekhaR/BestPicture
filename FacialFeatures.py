@@ -91,6 +91,7 @@ def video_input(fav_points):
         
        
         diff = facial_differences(fav_points,(new_x,new_y)) 
+
         if diff < 3000:
             # show the image
             cv2.imshow(winname="Similar", mat=copy_frame)
@@ -98,6 +99,7 @@ def video_input(fav_points):
             # Wait for a key press to exit
             if cv2.waitKey(delay=0):
                 cv2.destroyWindow("Similar")
+                
 
         # Exit when escape is pressed
         if cv2.waitKey(delay=1) == 27:
@@ -113,13 +115,22 @@ def facial_differences(fav_points,new_points):
     fav_x , fav_y = fav_points
     new_x , new_y = new_points
     diff = 0
+
+    # Euclidean distance between two points
     for i in range(0,68):
         diff += (fav_x[i] - new_x[i])**2 + (fav_y[i] - new_y[i])**2
     return diff
 
+    # # cosine similarity between two points
+    # for i in range(0,68):
+    #     diff += (fav_x[i] - new_x[i])**2 + (fav_y[i] - new_y[i])**2
+    # return diff
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     points = get_fav_features(args[0])
+    # print(facial_differences(points,points))
     video_input(points)
 
     
