@@ -1,6 +1,7 @@
 import cv2
 import dlib
 import sys
+import copy
 # Load the detector
 detector = dlib.get_frontal_face_detector()
 
@@ -39,23 +40,25 @@ def get_fav_features(impath):
         
     # show the image
     cv2.imshow(winname="Face", mat=img)
-
+ 
     # Delay between every fram
     cv2.waitKey(delay=0)
 
     # Close all windows
     cv2.destroyAllWindows()
 
-    return (x,y)
+    return (x_fav,y_fav)
 
-def video_input():
+def video_input(fav_points):
+    fav_x , fav_y = fav_points
+    
     # read the image
     cap = cv2.VideoCapture(0)
     num = 0
     while True:
         num +=1
         _, frame = cap.read()
-        
+        copy_frame = copy.deepcopy(frame)
         # Convert image into grayscale
         gray = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2GRAY)
 
@@ -70,22 +73,28 @@ def video_input():
 
             # Create landmark object
             landmarks = predictor(image=gray, box=face)
-
+            new_x = []
+            new_y = []
             # Loop through all the points
             for n in range(0, 68):
                 x = landmarks.part(n).x
                 y = landmarks.part(n).y
-
-                # Draw a circle
+                new_x.append(x)
+                new_y.append(y)
+                # # Draw a circle
                 cv2.circle(img=frame, center=(x, y), radius=3, color=(0, 255, 0), thickness=-1)
+                cv2.circle(img=frame, center=(fav_x[n], fav_y[n]), radius=3, color=(255, 0, 0), thickness=-1)
 
     # show the image
         cv2.imshow(winname="Face", mat=frame)
-
-        if num == 100:
+      
+        
+       
+        diff = facial_differences(fav_points,(new_x,new_y)) 
+        if diff < 3000:
             # show the image
-            cv2.imshow(winname="Similar", mat=frame)
-            cv2.imwrite('Captured_Image.jpg', frame)
+            cv2.imshow(winname="Similar", mat=copy_frame)
+            cv2.imwrite('Captured_Image.jpg', copy_frame)
             # Wait for a key press to exit
             if cv2.waitKey(delay=0):
                 cv2.destroyWindow("Similar")
@@ -100,7 +109,17 @@ def video_input():
     # Close all windows
     cv2.destroyAllWindows()
 
+def facial_differences(fav_points,new_points):
+    fav_x , fav_y = fav_points
+    new_x , new_y = new_points
+    diff = 0
+    for i in range(0,68):
+        diff += (fav_x[i] - new_x[i])**2 + (fav_y[i] - new_y[i])**2
+    return diff
+
 if __name__ == "__main__":
     args = sys.argv[1:]
-    get_fav_features(args[0])
-    video_input()
+    points = get_fav_features(args[0])
+    video_input(points)
+
+    
